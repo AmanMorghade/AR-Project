@@ -1,0 +1,149 @@
+{% extends "index.html" %}
+{% block content %}
+
+<div class="flex w-full h-screen bg-gray-100">
+
+    <!-- Sidebar -->
+    <div class="flex flex-col w-1/4 bg-gradient-to-b from-gray-800 to-gray-600 overflow-y-auto shadow-lg">
+        <h1 class="text-center text-white font-extrabold text-3xl py-4 tracking-wide bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 bg-clip-text text-transparent shadow-lg">
+            🪑 Explore Stunning Furniture
+        </h1>
+
+        {% for furniture in furniture_list %}
+        <div class="p-4 hover:bg-gray-700 transition rounded-lg mx-2 my-2 cursor-pointer furniture-item" data-model-url="{{ furniture.model_file.url }}">
+            <model-viewer 
+                src="{{ furniture.model_file.url }}" 
+                alt="3D Model"
+                disable-zoom
+                class="w-full h-48 mb-2 bg-white rounded shadow"
+            ></model-viewer>
+            <h2 class="text-center text-white font-medium text-lg">{{ furniture.name }}</h2>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Main Display -->
+    <div class="relative w-3/4 flex flex-col justify-center items-center bg-slate-200 p-6">
+        
+        <!-- Room container with wall overlays -->
+        <div id="room-container" class="relative w-full max-w-4xl bg-white rounded-xl overflow-hidden shadow-lg">
+            <!-- Wall overlays -->
+            <div id="wall-left" class="absolute top-0 left-0 h-full z-10 pointer-events-none" style="width: 33.33%; background-color: transparent;"></div>
+            <div id="wall-center" class="absolute top-0 left-1/3 h-full z-10 pointer-events-none" style="width: 33.34%; background-color: transparent;"></div>
+            <div id="wall-right" class="absolute top-0 right-0 h-full z-10 pointer-events-none" style="width: 33.33%; background-color: transparent;"></div>
+
+            <img src="{{ image.image.url }}" alt="room image" class="relative z-0 w-full h-auto object-cover rounded-xl shadow-lg">
+        </div>
+        
+        <!-- Mode Toggle -->
+        <button id="toggleModeBtn" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-md transition duration-300">
+            🖱 Toggle Move / Rotate (Move Mode)
+        </button>
+
+    </div>
+</div>
+
+<!-- Scripts -->
+<script type="module" src="https://unpkg.com/@google/model-viewer"></script>
+<script>
+    const container = document.getElementById('room-container');
+    const items = document.querySelectorAll('.furniture-item');
+    const toggleBtn = document.getElementById('toggleModeBtn');
+
+    let moveMode = true;
+    let currentDragging = null;
+    let offsetX = 0, offsetY = 0;
+    let selectedModel = null;
+
+  
+
+
+    // Toggle between Move and Rotate Mode
+    toggleBtn.addEventListener('click', () => {
+        moveMode = !moveMode;
+        toggleBtn.textContent = moveMode ? '🖱 Toggle Move / Rotate (Move Mode)' : '🖱 Toggle Move / Rotate (Rotate Mode)';
+
+        const allModels = container.querySelectorAll('model-viewer');
+        allModels.forEach(model => {
+            if (moveMode) {
+                model.removeAttribute('camera-controls');
+                model.style.cursor = 'move';
+            } else {
+                model.setAttribute('camera-controls', '');
+                model.style.cursor = 'grab';
+            }
+        });
+    });
+
+    // Add model on click
+    items.forEach(item => {
+        item.addEventListener('click', () => {
+            const modelUrl = item.getAttribute('data-model-url');
+            const model = document.createElement('model-viewer');
+            model.style.width = '100px'; // Set the size to the exact desired size
+            model.style.height = '100px';
+            model.style.padding = '0'; // Remove any padding that may create extra space
+            model.style.margin = '0';  // Remove any margin that may add extra space
+            model.style.overflow = 'hidden'; // Prevent overflow
+            model.style.objectFit = 'contain'; // Ensure the content fits within the model
+            model.style.position = 'absolute'; // Ensure it's positioned absolutely
+            model.setAttribute('src', modelUrl);
+            model.setAttribute('alt', 'Furniture');
+            model.setAttribute('disable-zoom', '');
+            model.classList.add('absolute');
+            model.style.top = '50px';
+            model.style.left = '50px';
+            model.style.zIndex = '10';
+            model.style.cursor = moveMode ? 'move' : 'grab';
+
+            if (!moveMode) {
+                model.setAttribute('camera-controls', '');
+            }
+
+            model.addEventListener('mousedown', (e) => {
+                if (moveMode) {
+                    currentDragging = model;
+                    offsetX = e.offsetX;
+                    offsetY = e.offsetY;
+                    selectedModel = model; // Set the selected model for deletion
+                }
+            });
+
+            model.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const scale = e.deltaY < 0 ? 1.05 : 0.95;
+                model.style.width = `${model.offsetWidth * scale}px`;
+                model.style.height = `${model.offsetHeight * scale}px`;
+            });
+
+            container.appendChild(model);
+        });
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (currentDragging && moveMode) {
+            const rect = container.getBoundingClientRect();
+            let x = e.clientX - rect.left - offsetX;
+            let y = e.clientY - rect.top - offsetY;
+            x = Math.max(0, Math.min(x, container.offsetWidth - currentDragging.offsetWidth));
+            y = Math.max(0, Math.min(y, container.offsetHeight - currentDragging.offsetHeight));
+            currentDragging.style.left = `${x}px`;
+            currentDragging.style.top = `${y}px`;
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        currentDragging = null;
+    });
+
+    // Delete model when "Delete" key is pressed
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Delete' && selectedModel) {
+            container.removeChild(selectedModel); // Remove the selected model
+            selectedModel = null; // Reset the selected model
+        }
+    });
+
+</script>
+
+{% endblock %}
