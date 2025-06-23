@@ -1,138 +1,212 @@
-{% extends "index.html" %}
-{% block content %}
+    {% extends "index.html" %}
+    {% block content %}
 
-<div class="flex w-full h-screen bg-slate-600">
+    <div class="relative w-full h-screen">
+        <div class="flex w-full h-full">
+            <!-- Sidebar -->
+            <div class="w-1/4 overflow-y-auto shadow-lg bg-slate-700">
+                <h1 class="text-center text-3xl font-extrabold py-5 bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 text-transparent bg-clip-text shadow-xl">
+                    🪑 Explore Stunning Furniture
+                </h1>
+                <div class="grid grid-cols-2 gap-4 p-4">
+                  
+                    {% comment %} for user furniture {% endcomment %}
+                    <div onclick="openModal()" 
+                        <div onclick="handleUploadClick()" 
+                        class="p-2 bg-slate-800 rounded-xl flex items-center justify-center cursor-pointer hover:scale-105 hover:shadow-2xl transition-all">
+                        <span class="text-white text-center text-lg font-semibold">Upload Your Furniture</span>
+                    </div>
 
-    <div class="w-1/4  overflow-y-auto shadow-lg">
-        <h1 class="text-center text-gray-900 font-extrabold text-3xl py-4 tracking-wide bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 bg-clip-text text-transparent shadow-lg">
-            🪑 Explore Stunning Furniture
-        </h1>
-    <!-- Sidebar -->
-    <div class="grid grid-cols-2">
-       
-        
-        {% for furniture in furniture_list %}
-        <div class="p-4 hover:bg-gray-700 transition rounded-lg mx-2 my-2 cursor-pointer furniture-item" data-model-url="{{ furniture.model_file.url }}">
-            <model-viewer 
-                src="{{ furniture.model_file.url }}" 
-                alt="3D Model"
-                disable-zoom
-                class="w-full h-48 mb-2 bg-white rounded shadow"
-            ></model-viewer>
-            <h2 class="text-center text-white font-medium text-lg">{{ furniture.name }}</h2>
-        </div>
-        {% endfor %}
+                    {% for furniture in furniture_list %}
+                    <div class="p-2 bg-slate-800 rounded-xl hover:scale-105 hover:shadow-2xl transition-all cursor-pointer furniture-item" data-model-url="{{ furniture.model_file.url }}">
+                        <model-viewer 
+                            src="{{ furniture.model_file.url }}" 
+                            alt="3D Model"
+                            disable-zoom
+                            class="w-full h-40 mb-2 bg-white rounded-md shadow"
+                        ></model-viewer>
+                        <h2 class="text-center text-white font-medium text-base">{{ furniture.name }}</h2>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+
+            {% comment %} user furniture {% endcomment %}
+<div id="uploadModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50">
+    <div class="bg-white p-6 rounded-xl w-96 shadow-2xl relative">
+        <h2 class="text-xl font-bold mb-4 text-gray-700">Upload Your Furniture</h2>
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="block mb-1 text-gray-600">Furniture Name</label>
+                {{ form.name }}
+            </div>
+            <div class="mb-3">
+                <label class="block mb-1 text-gray-600">Furniture Model (.glb)</label>
+                {{ form.model_file }}
+            </div>
+            <div class="flex justify-end space-x-3 mt-4">
+                <button type="button" onclick="closeModal()"
+                        class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+                <button type="submit" 
+                        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Upload</button>
+            </div>
+        </form>
     </div>
 </div>
+    
 
-    <!-- Main Display -->
-    <div class="relative w-3/4 flex flex-col justify-center items-center bg-slate-200 p-6">
-        
-        <div id="room-container" class="relative w-4/5 h-auto bg-white rounded-xl overflow-hidden shadow-lg">
-            <img src="{{ image.image.url }}" alt="room image" class="relative z-0 w-full h-full object-cover rounded-xl">
+
+
+            <!-- Main Display -->
+            <div class="relative w-3/4 flex flex-col justify-center items-center bg-slate-200 p-8 rounded-l-3xl">
+                <div id="room-container" class="relative w-4/5 bg-white rounded-2xl overflow-hidden shadow-2xl">
+                <img src="{{ image.image.url }}" alt="room image" class="w-full h-full object-cover rounded-2xl">
+
+                <!-- Small download button at top right -->
+                <button id="downloadIconBtn" 
+                        class="absolute top-2 right-2 bg-white bg-opacity-70 hover:bg-opacity-100 rounded-full p-1 shadow-md"
+                        title="Download Image"
+                        aria-label="Download Image"
+                        type="button">
+                    <!-- SVG Download Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700 hover:text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
+                    </svg>
+                </button>
         </div>
-        
-        <!-- Mode Toggle -->
-        <button id="toggleModeBtn" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-md transition duration-300">
+
+        <button id="toggleModeBtn" class="mt-6 bg-blue-600 justify-center hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-md transition duration-300">
             🖱 Move Mode
         </button>
-
     </div>
-</div>
+        </div>
+    </div>
 
-<!-- Scripts -->
-<script type="module" src="https://unpkg.com/@google/model-viewer"></script>
-<script>
-    const container = document.getElementById('room-container');
-    const items = document.querySelectorAll('.furniture-item');
-    const toggleBtn = document.getElementById('toggleModeBtn');
+    <!-- Scripts -->
+    <script type="module" src="https://unpkg.com/@google/model-viewer"></script>
+    <!-- ✅ Correct dom-to-image script -->
+    <script src="https://cdn.jsdelivr.net/npm/dom-to-image-more@2.9.0/dist/dom-to-image-more.min.js"></script>
 
-    let moveMode = true;
-    let currentDragging = null;
-    let offsetX = 0, offsetY = 0;
-    let selectedModel = null;
+    <script>
+        const container = document.getElementById('room-container');
+        const items = document.querySelectorAll('.furniture-item');
+        const toggleBtn = document.getElementById('toggleModeBtn');
 
-    // Toggle between Move and Rotate Mode
-    toggleBtn.addEventListener('click', () => {
-        moveMode = !moveMode;
-        toggleBtn.textContent = moveMode ? 
-            '🖱 Move Mode' : 
-            '🖱 Rotate Mode';
+        let moveMode = true;
+        let currentDragging = null;
+        let offsetX = 0, offsetY = 0;
+        let selectedModel = null;
 
-        const allModels = container.querySelectorAll('model-viewer');
-        allModels.forEach(model => {
-            if (moveMode) {
-                model.removeAttribute('camera-controls');
-                model.style.cursor = 'move';
-            } else {
-                model.setAttribute('camera-controls', '');
-                model.style.cursor = 'grab';
-            }
-        });
-    });
+        // Toggle between Move and Rotate Mode
+        toggleBtn.addEventListener('click', () => {
+            moveMode = !moveMode;
+            toggleBtn.textContent = moveMode ? '🖱 Move Mode' : '🌀 Rotate Mode';
 
-    // Add model on click
-    items.forEach(item => {
-        item.addEventListener('click', () => {
-            const modelUrl = item.getAttribute('data-model-url');
-            const model = document.createElement('model-viewer');
-            model.src = modelUrl;
-            model.alt = 'Furniture';
-            model.style.width = '150px';
-            model.style.height = '150px';
-            model.style.position = 'absolute';
-            model.style.top = '50px';
-            model.style.left = '50px';
-            model.style.cursor = moveMode ? 'move' : 'grab';
-            model.style.zIndex = '10';
-
-            if (!moveMode) {
-                model.setAttribute('camera-controls', '');
-            }
-
-            model.addEventListener('mousedown', (e) => {
+            const allModels = container.querySelectorAll('model-viewer');
+            allModels.forEach(model => {
                 if (moveMode) {
-                    currentDragging = model;
-                    offsetX = e.offsetX;
-                    offsetY = e.offsetY;
-                    selectedModel = model;
+                    model.removeAttribute('camera-controls');
+                    model.style.cursor = 'move';
+                } else {
+                    model.setAttribute('camera-controls', '');
+                    model.style.cursor = 'grab';
                 }
             });
-
-            model.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                const scale = e.deltaY < 0 ? 1.1 : 0.9;
-                model.style.width = `${model.clientWidth * scale}px`;
-                model.style.height = `${model.clientHeight * scale}px`;
-            });
-
-            container.appendChild(model);
         });
-    });
 
-    window.addEventListener('mousemove', (e) => {
-        if (currentDragging && moveMode) {
-            const rect = container.getBoundingClientRect();
-            let x = e.clientX - rect.left - offsetX;
-            let y = e.clientY - rect.top - offsetY;
+        // Add model on click
+        items.forEach(item => {
+            item.addEventListener('click', () => {
+                const modelUrl = item.getAttribute('data-model-url');
+                const model = document.createElement('model-viewer');
+                model.src = modelUrl;
+                model.alt = 'Furniture';
+                model.style.width = '150px';
+                model.style.height = '150px';
+                model.style.position = 'absolute';
+                model.style.top = '50px';
+                model.style.left = '50px';
+                model.style.cursor = moveMode ? 'move' : 'grab';
+                model.style.zIndex = '10';
 
-            // Allow moving outside container but keep it hidden
-            currentDragging.style.left = `${x}px`;
-            currentDragging.style.top = `${y}px`;
-        }
-    });
+                if (!moveMode) {
+                    model.setAttribute('camera-controls', '');
+                }
 
-    window.addEventListener('mouseup', () => {
-        currentDragging = null;
-    });
+                model.addEventListener('mousedown', (e) => {
+                    if (moveMode) {
+                        currentDragging = model;
+                        offsetX = e.offsetX;
+                        offsetY = e.offsetY;
+                        selectedModel = model;
+                    }
+                });
 
-    // Delete model when "Delete" key is pressed
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'Delete' && selectedModel) {
-            container.removeChild(selectedModel);
-            selectedModel = null;
-        }
-    });
-</script>
+                model.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const scale = e.deltaY < 0 ? 1.1 : 0.9;
+                    model.style.width = `${model.clientWidth * scale}px`;
+                    model.style.height = `${model.clientHeight * scale}px`;
+                });
 
-{% endblock %}
+                container.appendChild(model);
+            });
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (currentDragging && moveMode) {
+                const rect = container.getBoundingClientRect();
+                let x = e.clientX - rect.left - offsetX;
+                let y = e.clientY - rect.top - offsetY;
+
+                currentDragging.style.left = `${x}px`;
+                currentDragging.style.top = `${y}px`;
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            currentDragging = null;
+        });
+
+        // Delete model with Delete key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Delete' && selectedModel) {
+                container.removeChild(selectedModel);
+                selectedModel = null;
+            }
+        });
+
+        // Screenshot functionality using dom-to-image-more
+        document.getElementById('screenshotBtn').addEventListener('click', () => {
+            const node = document.getElementById('room-container');
+
+            domtoimage.toBlob(node)
+                .then(function (blob) {
+                    const link = document.createElement('a');
+                    link.download = 'room_with_furniture.png';
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                })
+                .catch(function (error) {
+                    console.error('Screenshot failed:', error);
+                });
+        });
+
+        function handleUploadClick() {
+    const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+    if (isAuthenticated) {
+        openModal();
+    } else {
+        // Show login-required popup
+        document.getElementById('loginRequiredModal').classList.remove('hidden');
+    }
+}
+
+function closeLoginPopup() {
+    document.getElementById('loginRequiredModal').classList.add('hidden');
+}
+    </script>
+
+    {% endblock %}
